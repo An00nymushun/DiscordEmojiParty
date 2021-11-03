@@ -219,7 +219,7 @@ function Init(final)
 }
 
 function Start() {
-    if(!Initialized && Init() !== 1) return;
+    if(!Initialized && Init(true) !== 1) return;
 
     const { FileUploader, ParserModule, PermissionEvaluator, ChannelStore, UserStore, MessageCache, PendingReplyDispatcher, original_useEmojiSelectHandler } = Discord;
 
@@ -415,8 +415,10 @@ function Start() {
         let tryToProcess = true;
         if(ChannelStore && UserStore && PermissionEvaluator) {
             let channel = ChannelStore.getChannel(channelId);
-            let currentUser = UserStore.getCurrentUser();
-            tryToProcess = PermissionEvaluator.can(0x8000n/*ATTACH_FILES*/, currentUser, channel);
+            if(channel.type !== /*DM*/1 && channel.type !== /*GROUP_DM*/3) {
+                let currentUser = UserStore.getCurrentUser();
+                tryToProcess = PermissionEvaluator.can(0x8000n/*ATTACH_FILES*/, currentUser, channel);
+            }
         }
 
         if(tryToProcess) {
@@ -470,7 +472,7 @@ return function() { return {
     getName: () => "DiscordEmojiParty",
     getShortName: () => "EmojiParty",
     getDescription: () => "",
-    getVersion: () => "1.0",
+    getVersion: () => "1.1",
     getAuthor: () => "An0",
 
     start: Start,
