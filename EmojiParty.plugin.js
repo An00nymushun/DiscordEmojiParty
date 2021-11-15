@@ -471,7 +471,7 @@ function Stop() {
 return function() { return {
     getName: () => "DiscordEmojiParty",
     getShortName: () => "EmojiParty",
-    getDescription: () => "",
+    getDescription: () => "Create a nice image from your emojis! You can include some text optionally too!",
     getVersion: () => "1.1",
     getAuthor: () => "An0",
 
