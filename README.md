@@ -1,4 +1,12 @@
-# DiscordEmojiParty
+<h1 align="center">EmojiParty</h1>
+
+<p id="screenshot" align="center">
+<br>
+<a href="#screenshot"><img src="/EmojiParty.png" alt="Emoji Party in action." title="Use any emote!"></a>
+<br>
+<h1></h1>
+</p>
+<br>
 
 Create a nice image from your emojis! You can include some text optionally too!
 
