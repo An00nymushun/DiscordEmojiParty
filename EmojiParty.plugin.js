@@ -29,6 +29,7 @@ const TriggerEmojiCount = 5;
 const MaxTextHeight = 10;
 const MaxTextWidth = 100;
 const EmojiImageSize = 128;
+const EmojiUrlRegex = /^https:\/\/cdn\.discordapp\.com\/emojis\/(\d{16,20})/;
 const EmojiUrlFormat = (id) => `https://cdn.discordapp.com/emojis/${id}.png?size=${EmojiImageSize}`;
 const ImageCacheSize = 50;
 const BaseColor = "#f46";
@@ -232,9 +233,16 @@ function Start() {
                     let content = messagePart.content;
                     if(content !== " " || !previousPart?.type.endsWith("moji")) textParts.push(content);
                     break;
-                } case 'link':
-                    fallthroughParts.push(messagePart.target);
-                    break;
+                } case 'link': {
+                    const emojiLinkMatch = EmojiUrlRegex.exec(messagePart.target);
+                    if(emojiLinkMatch !== null) {
+                        emojiParts.push({ type: 'customEmoji', emojiId: emojiLinkMatch[1] });
+                    }
+                    else {
+                        fallthroughParts.push(messagePart.target);
+                    }
+                    
+                } break;
                 case 'mention':
                     textParts.push(getTextPart(messagePart));
                     fallthroughParts.push(messagePart.userId ? `<@${messagePart.userId}>` : `<@&${messagePart.roleId}>`);
@@ -264,6 +272,29 @@ function Start() {
             previousPart = messagePart;
         }
     }
+    function drawWithRandomTilt(ctx, image, x, y, width, height) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(Utils.RandomNormal(-Math.PI, Math.PI, 4));
+        ctx.drawImage(image, -width / 2, -height / 2, width, height);
+        ctx.restore();
+    }
+    function calculateNewSize(desiredSize, width, height) {
+        if(width > desiredSize || height > desiredSize) {
+            if(width > height) {
+                height *= desiredSize / width;
+                width = desiredSize;
+            }
+            else {
+                width *= desiredSize / height;
+                height = desiredSize;
+            }
+        }
+        const imageSize = Math.max(width, height);
+        const halfImageSize = imageSize / 2;
+        return [width, height, imageSize, halfImageSize];
+    }
+
     const imageCache = new Map();
     async function renderUploadEmojiParty(channelId, message, messageParts, mentions, callOriginal) {
         let fallthroughParts = [];
@@ -319,63 +350,64 @@ function Start() {
             imageCache.set(emojiId, imageElement);
         }
 
-        const emojiPlaces = [];
-        for (const emojiPart of emojiParts) {
-            const image = imageCache.get(emojiPart.emojiId ?? emojiPart.src);
-            let width = image.width;
-            let height = image.height;
-            const desiredSize = 128 - Math.random() * emojiParts.length * 2;
-            if(width > desiredSize || height > desiredSize) {
-                if(width > height) {
-                    height *= desiredSize / width;
-                    width = desiredSize;
-                }
-                else {
-                    width *= desiredSize / height;
-                    height = desiredSize;
-                }
+        if(emojiParts.length > 50) {
+            
+            for (const emojiPart of emojiParts) {
+                const image = imageCache.get(emojiPart.emojiId ?? emojiPart.src);
+
+                const desiredSize = 40 + Math.random() * 10;
+                const [width, height, imageSize, halfImageSize] = calculateNewSize(desiredSize, image.width, image.height);
+
+                const x = Utils.Random(halfImageSize, canvas.width - halfImageSize);
+                const y = Utils.Random(halfImageSize, canvas.height - halfImageSize);
+
+                drawWithRandomTilt(ctx, image, x, y, width, height);
             }
-            const imageSize = Math.max(width, height);
-            const halfImageSize = imageSize / 2;
 
-            let x, y;
-            let biggestNearestNeighborDistance = Number.NEGATIVE_INFINITY;
+        }
+        else {
+            const emojiPlaces = [];
+            for (const emojiPart of emojiParts) {
+                const image = imageCache.get(emojiPart.emojiId ?? emojiPart.src);
+                let desiredSize = 128 - Math.random() * emojiParts.length * 2;
+                if(desiredSize < 40) desiredSize = 40;
+                const [width, height, imageSize, halfImageSize] = calculateNewSize(desiredSize, image.width, image.height);
 
-            while(true) {
-                const generatedX = Utils.Random(halfImageSize, canvas.width - halfImageSize);
-                const generatedY = Utils.Random(halfImageSize, canvas.height - halfImageSize);
+                let x, y;
+                let biggestNearestNeighborDistance = Number.NEGATIVE_INFINITY;
 
-                let closestDistance = Number.POSITIVE_INFINITY;
-                let regenerationChance = 0;
-                for (const [otherX, otherY, otherSize] of emojiPlaces) {
-                    let imageSizes = halfImageSize + otherSize;
-                    let deltaX = generatedX - otherX;
-                    let deltaY = generatedY - otherY;
-                    let distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                    let overlapDistance = distance - imageSizes;
-                    if(overlapDistance < closestDistance) {
-                        closestDistance = overlapDistance;
-                        // tested and works with distance 0
-                        regenerationChance = Math.min(Math.log((imageSizes * 2) / distance), 0.95);
+                while(true) {
+                    const generatedX = Utils.Random(halfImageSize, canvas.width - halfImageSize);
+                    const generatedY = Utils.Random(halfImageSize, canvas.height - halfImageSize);
+
+                    let closestDistance = Number.POSITIVE_INFINITY;
+                    let regenerationChance = 0;
+                    for (const [otherX, otherY, otherSize] of emojiPlaces) {
+                        let imageSizes = halfImageSize + otherSize;
+                        let deltaX = generatedX - otherX;
+                        let deltaY = generatedY - otherY;
+                        let distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                        let overlapDistance = distance - imageSizes;
+                        if(overlapDistance < closestDistance) {
+                            closestDistance = overlapDistance;
+                            // tested and works with distance 0
+                            regenerationChance = Math.min(Math.log((imageSizes * 2) / distance), 0.95);
+                        }
                     }
+
+                    if(closestDistance > biggestNearestNeighborDistance) {
+                        x = generatedX;
+                        y = generatedY;
+                        biggestNearestNeighborDistance = closestDistance;
+                    }
+
+                    if(regenerationChance <= Math.random()) break;
                 }
 
-                if(closestDistance > biggestNearestNeighborDistance) {
-                    x = generatedX;
-                    y = generatedY;
-                    biggestNearestNeighborDistance = closestDistance;
-                }
+                emojiPlaces.push([x, y, halfImageSize]);
 
-                if(regenerationChance <= Math.random()) break;
+                drawWithRandomTilt(ctx, image, x, y, width, height);
             }
-
-            emojiPlaces.push([x, y, halfImageSize]);
-
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.rotate(Utils.RandomNormal(-Math.PI, Math.PI, 4));
-            ctx.drawImage(image, -width / 2, -height / 2, width, height);
-            ctx.restore();
         }
 
         while(imageCache.size >= ImageCacheSize) {
@@ -426,8 +458,13 @@ function Start() {
             const messageParts = ParserModule.parseToAST(message.content, true, { channelId });
             let emojiCount = 0;
             for (const messagePart of messageParts) {
-                if((messagePart.type === "emoji" && messagePart.src) || messagePart.type === "customEmoji")
-                    emojiCount++;
+                const type = messagePart.type;
+                if( (type === 'emoji' && messagePart.src) ||
+                    type === 'customEmoji' ||
+                    (type === 'link' && EmojiUrlRegex.test(messagePart.target))) {
+
+                        emojiCount++;
+                    }
             }
 
             if(emojiCount >= TriggerEmojiCount || message.invalidEmojis.length !== 0 || message.validNonShortcutEmojis.some(x => !x.available)) {
@@ -472,7 +509,7 @@ return function() { return {
     getName: () => "DiscordEmojiParty",
     getShortName: () => "EmojiParty",
     getDescription: () => "Create a nice image from your emojis! You can include some text optionally too!",
-    getVersion: () => "1.1",
+    getVersion: () => "1.2",
     getAuthor: () => "An0",
 
     start: Start,
