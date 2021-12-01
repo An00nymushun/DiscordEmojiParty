@@ -1,4 +1,11 @@
-//META{"name":"EmojiParty"}*//
+/**
+ * @name EmojiParty
+ * @author An0
+ * @version 1.2
+ * @description Create a nice image from your emojis! You can include some text optionally too!
+ * @source https://github.com/An00nymushun/DiscordEmojiParty
+ * @updateUrl https://raw.githubusercontent.com/An00nymushun/DiscordEmojiParty/main/EmojiParty.plugin.js
+ */
 
 /*@cc_on
 @if (@_jscript)
