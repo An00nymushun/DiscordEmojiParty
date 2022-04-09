@@ -1,7 +1,7 @@
 /**
  * @name EmojiParty
  * @author An0
- * @version 1.2
+ * @version 1.3
  * @description Create a nice image from your emojis! You can include some text optionally too!
  * @source https://github.com/An00nymushun/DiscordEmojiParty
  * @updateUrl https://raw.githubusercontent.com/An00nymushun/DiscordEmojiParty/main/EmojiParty.plugin.js
@@ -377,6 +377,7 @@ function Start() {
             for (const emojiPart of emojiParts) {
                 const image = imageCache.get(emojiPart.emojiId ?? emojiPart.src);
                 let desiredSize = 128 - Math.random() * emojiParts.length * 2;
+
                 if(desiredSize < 40) desiredSize = 40;
                 const [width, height, imageSize, halfImageSize] = calculateNewSize(desiredSize, image.width, image.height);
 
@@ -446,7 +447,7 @@ function Start() {
                 }
             }
 
-            FileUploader.upload(channelId, blob, 0, message, false, `${textParts[0] || "EmojiParty"}.png`)
+            FileUploader.upload({ channelId, file: blob, draftType: 0, message, hasSpoiler: false, filename: `${textParts[0] || "EmojiParty"}.png` })
         });
     }
 
@@ -456,7 +457,7 @@ function Start() {
             let channel = ChannelStore.getChannel(channelId);
             if(channel.type !== /*DM*/1 && channel.type !== /*GROUP_DM*/3) {
                 let currentUser = UserStore.getCurrentUser();
-                tryToProcess = PermissionEvaluator.can(0x8000n/*ATTACH_FILES*/, currentUser, channel);
+                tryToProcess = PermissionEvaluator.can({ permission: 0x8000n/*ATTACH_FILES*/, user: currentUser, context: channel });
             }
         }
 
@@ -516,7 +517,7 @@ return function() { return {
     getName: () => "DiscordEmojiParty",
     getShortName: () => "EmojiParty",
     getDescription: () => "Create a nice image from your emojis! You can include some text optionally too!",
-    getVersion: () => "1.2",
+    getVersion: () => "1.3",
     getAuthor: () => "An0",
 
     start: Start,
