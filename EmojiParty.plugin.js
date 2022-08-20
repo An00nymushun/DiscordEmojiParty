@@ -66,7 +66,7 @@ var Utils = {
         if(typeof BdApi !== "undefined" && BdApi?.findModuleByProps && BdApi?.findModule) {
             return this.cachedWebpack = { findModule: BdApi.findModule, findModuleByUniqueProperties: (props) => BdApi.findModuleByProps.apply(null, props) };
         }
-        else if (isPowercord) {
+        else if(isPowercord) {
             const wp = require("powercord/webpack");
             const find = (filter) => wp.getModule(filter, false);
             return this.cachedWebpack = { findModule: find, findModuleByUniqueProperties: find };
