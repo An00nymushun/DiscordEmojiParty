@@ -51,6 +51,8 @@ const FontOptions = {
     miterLimit: 2
 };
 
+const isPowercord = typeof powercord !== "undefined" && typeof require !== "undefined";
+
 var Discord;
 var Utils = {
     Log: (message) => { console.log(`%c[EmojiParty] %c${message}`, `color:${BaseColor};font-weight:bold`, "") },
@@ -63,6 +65,11 @@ var Utils = {
 
         if(typeof BdApi !== "undefined" && BdApi?.findModuleByProps && BdApi?.findModule) {
             return this.cachedWebpack = { findModule: BdApi.findModule, findModuleByUniqueProperties: (props) => BdApi.findModuleByProps.apply(null, props) };
+        }
+        else if(isPowercord) {
+            const wp = require("powercord/webpack");
+            const find = (filter) => wp.getModule(filter, false);
+            return this.cachedWebpack = { findModule: find, findModuleByUniqueProperties: find };
         }
         else if(Discord.window.webpackChunkdiscord_app != null) {
             const ids = ['__extra_id__'];
@@ -513,7 +520,10 @@ function Stop() {
     useEmojiSelectHandlerHook = Discord.original_useEmojiSelectHandler;
 }
 
-return function() { return {
+return isPowercord ? class DiscordEmojiParty extends require("powercord/entities").Plugin {
+    startPlugin = Start;
+    pluginWillUnload = Stop;
+} : function() { return {
     getName: () => "DiscordEmojiParty",
     getShortName: () => "EmojiParty",
     getDescription: () => "Create a nice image from your emojis! You can include some text optionally too!",
