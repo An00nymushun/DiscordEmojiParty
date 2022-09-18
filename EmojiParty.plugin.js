@@ -304,6 +304,16 @@ function Start() {
                 height = desiredSize;
             }
         }
+        else if(width < desiredSize || height < desiredSize){
+            if(width > height) {
+                height *= desiredSize / width;
+                width = desiredSize;
+            }
+            else {
+                width *= desiredSize / height;
+                height = desiredSize;
+            }
+        }
         const imageSize = Math.max(width, height);
         const halfImageSize = imageSize / 2;
         return [width, height, imageSize, halfImageSize];
