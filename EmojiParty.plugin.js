@@ -1,7 +1,7 @@
 /**
  * @name EmojiParty
  * @author An0
- * @version 1.3
+ * @version 1.4
  * @description Create a nice image from your emojis! You can include some text optionally too!
  * @source https://github.com/An00nymushun/DiscordEmojiParty
  * @updateUrl https://raw.githubusercontent.com/An00nymushun/DiscordEmojiParty/main/EmojiParty.plugin.js
@@ -125,7 +125,7 @@ var Utils = {
         let nodeHttpsOptions;
         if(typeof(require) !== 'undefined') {
             nodeHttps = require('https');
-            nodeHttpsOptions = { agent: new nodeHttps.Agent({ keepAlive: true }), timeout: 120000 };
+            nodeHttpsOptions = { agent: nodeHttps.Agent && new nodeHttps.Agent({ keepAlive: true }), timeout: 120000 };
         }
 
         return(
@@ -527,7 +527,7 @@ return isPowercord ? class DiscordEmojiParty extends require("powercord/entities
     getName: () => "DiscordEmojiParty",
     getShortName: () => "EmojiParty",
     getDescription: () => "Create a nice image from your emojis! You can include some text optionally too!",
-    getVersion: () => "1.3",
+    getVersion: () => "1.4",
     getAuthor: () => "An0",
 
     start: Start,
